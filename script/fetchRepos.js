@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let allRepos = [];
     let hasMore = true;
 
+    // Fetch all repos with pagination
     while (hasMore) {
       const response = await fetch(`https://api.github.com/users/jvcataquiz/repos?per_page=100&page=${page}`);
       const repos = await response.json();
@@ -15,9 +16,10 @@ document.addEventListener('DOMContentLoaded', () => {
       page++;
     }
 
+    // Filter only Java or TypeScript repos and sort by recent push
     const javaRepos = allRepos
       .filter(repo => repo.language === 'Java' || repo.language === 'TypeScript')
-      .reverse();
+      .sort((a, b) => new Date(b.pushed_at) - new Date(a.pushed_at));
 
     if (repoCountElement) repoCountElement.textContent = javaRepos.length;
 
@@ -26,15 +28,19 @@ document.addEventListener('DOMContentLoaded', () => {
       projectCard.className = 'project-card1';
 
       const desc = repo.description || 'No description available.';
-      const shortDesc = desc.length > 100 ? desc.substring(0, 100) + '...' : desc;
+       const shortDesc = desc.length >= 100
+        ? desc.substring(0, 100) + '...'
+        : desc.padEnd(100, '\u00A0');
+      const name = repo.name || 'No name available.';
+      const shortName = name.length > 30 ? name.substring(0, 30) + '...' : name;
 
-      const emoji = ["💻","🖥️","🖱️","⌨️","🕹️","📱","📡","🛠️","⚙️","🧩","🤖","🔋","💾","🗄️"]
-        [Math.floor(Math.random() * 14)];
+      const emojiList = ["💻","🖥️","🖱️","⌨️","🕹️","📱","📡","🛠️","⚙️","🧩","🤖","🔋","💾","🗄️"];
+      const emoji = emojiList[Math.floor(Math.random() * emojiList.length)];
 
       projectCard.innerHTML = `
         <div class="project-image">${emoji}</div>
         <div class="project-content">
-          <h3 class="project-title">${repo.name}</h3>
+          <h3 class="project-title">${shortName}</h3>
           <p class="project-description">${shortDesc}</p>
           <div class="project-tags">
             <span class="tag">${repo.language || 'Java'}</span>
@@ -51,7 +57,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // ✅ Scrolls exactly per "page" and loops cleanly
+  // Scroll carousel function
   window.scrollCarousel = function (carouselId, direction) {
     const carousel = document.getElementById(`${carouselId}-carousel`);
     if (!carousel) return;
@@ -64,7 +70,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const cardsPerView = window.innerWidth <= 480 ? 1 : 3;
     const scrollStep = (cardWidth + gap) * cardsPerView;
 
-    // Find next scroll position aligned to card width
     let target = Math.round(carousel.scrollLeft / (cardWidth + gap)) * (cardWidth + gap);
     target += direction * scrollStep;
 

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jerick Cataquiz - Project</title>
+    <link rel="icon"
+        href="https://static.vecteezy.com/system/resources/previews/000/356/693/original/portfolio-vector-icon.jpg"
+        type="image/x-icon">
+    <link rel="stylesheet" href="css/project.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/animated-background.css">
+</head>
+
+<body>
+    <div id="navbar"></div>
+    <canvas id="code-canvas"></canvas>
+    <!-- Projects Section -->
+    <section class="projects2" id="projects">
+        <div class="projects-container2">
+            <h2 class="section-title" style="text-align: center;">All Projects: <span id="repoCount">0</span>
+            </h2>
+            <div class="filter-container">
+                <button class="filter-btn active" data-filter="all">All</button>
+                <button class="filter-btn" data-filter="Java">Java</button>
+                <button class="filter-btn" data-filter="TypeScript">TypeScript</button>
+                <button class="filter-btn" data-filter="Spring Boot">Spring Boot</button>
+                <button class="filter-btn" data-filter="React">React</button>
+                <button class="filter-btn" data-filter="Angular">Angular</button>
+                <button class="filter-btn" data-filter="HTML">HTML</button>
+                <button class="filter-btn" data-filter="CSS">CSS</button>
+                <button class="filter-btn" data-filter="JS">JS</button>
+                <button class="filter-btn" data-filter="C#">C#</button>
+                <button class="filter-btn" data-filter="Game">Game</button>
+            </div>
+            <div class="projects-grid2" id="featured-carousel2">
+            </div>
+        </div>
+    </section>
+    <div id="footer"></div>
+    <script src="script/allproject.js"></script>
+    <script src="script/navbar.js"></script>
+    <script src="script/footer.js"></script>
+    <script src="script/animated-background.js"></script>
+    <script>
+        // Intersection Observer
+        const observerOptions = {
+            threshold: 0.3,
+            rootMargin: '0px 0px -100px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('animate');
+                }
+            });
+        }, observerOptions);
+
+        // Observe elements
+        document.querySelectorAll('.project-card2').forEach(el => {
+            observer.observe(el);
+        });
+
+        // Add stagger animation delay to project cards
+        document.querySelectorAll('.project-card2').forEach((card, index) => {
+            card.style.animationDelay = `${index * 0.15}s`;
+        });
+    </script>
+</body>
+
+</html>

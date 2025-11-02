@@ -76,7 +76,10 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>
           <div class="project-links2">
             ${repo.html_url ? `<a href="${repo.html_url}" target="_blank" class="project-link2">Code</a>` : ''}
-          </div>
+             <a href="#" class="project-link2">
+              <i class="fas fa-external-link-alt"></i> Live Demo
+              </a>
+            </div>
         </div>
       `;
 

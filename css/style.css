@@ -575,7 +575,9 @@ nav {
     background: rgba(244, 67, 54, 0.1);
     transform: translateX(10px);
 }
-
+.footer{
+    text-align: center;
+}
 .skill-item i {
     color: #f44336;
 }

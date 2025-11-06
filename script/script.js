@@ -44,7 +44,7 @@ document.addEventListener('click', function (event) {
 });
 
 // Typing animation
-const roles = ['Java Developer', 'Software Engineer', 'Senior Analyst', 'Computer Engineer', 'Spring Boot Specialist', 'Back-End Engineer'];
+const roles = ['Senior Analyst', 'Software Engineer', 'Java Developer', 'Computer Engineer', 'Spring Boot Specialist', 'Back-End Engineer'];
 let roleIndex = 0;
 let charIndex = 0;
 let isDeleting = false;

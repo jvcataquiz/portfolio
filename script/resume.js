@@ -4,7 +4,7 @@ $('#myModal').on('show.bs.modal', function (event) {
   var modal = $(this)
 
   const data = {
-    "Cert1" :`<iframe src="https://drive.google.com/file/d/1pNMKp4wwftYGbcrQq5aNxQYPk0b6u5bj/preview" width="100%" height="600vh" allow="autoplay"></iframe>`
+    "Cert1" :`<iframe "https://drive.google.com/file/d/1qvr266Pj_Gc5mtVME4Jk93b7-F3DZF2R/preview" width="100%" height="600vh" allow="autoplay"></iframe>`
   }
 
   var datavalue = data[recipient]

@@ -21,8 +21,8 @@ document.addEventListener('DOMContentLoaded', () => {
         page++;
       }
 
-      const portfolioRepos = allRepos.filter(repo => repo.title === 'portfolio').sort((a, b) => new Date(b.pushed_at) - new Date(a.pushed_at));
-      allRepos = portfolioRepos;
+      // Sort by last pushed date descending
+      allRepos.sort((a, b) => new Date(b.pushed_at) - new Date(a.pushed_at));
       
       if (repoCountElement) repoCountElement.textContent = allRepos.length;
 

@@ -1136,6 +1136,7 @@ footer {
 .theme-toggle {
     padding: 8px 15px;
     font-size: 12px;
+    visibility: hidden;
 }
 
 .theme-toggle .icon {

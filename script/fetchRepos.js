@@ -2,39 +2,71 @@ document.addEventListener('DOMContentLoaded', () => {
   const featuredCarousel = document.getElementById('featured-carousel');
   const repoCountElement = document.getElementById('repoCount');
 
-  async function fetchAllRepos() {
-    let page = 1;
-    let allRepos = [];
-    let hasMore = true;
+  async function loadReposFromCache() {
+    try {
+      const response = await fetch('./data/repos.json');
+      if (!response.ok) throw new Error('Cache not found');
+      return await response.json();
+    } catch (error) {
+      console.warn('Using fallback because repo cache is unavailable.', error);
+      return [];
+    }
+  }
 
-    // Fetch all repos with pagination
-    while (hasMore) {
-      const response = await fetch(`https://api.github.com/users/jvcataquiz/repos?per_page=100&page=${page}`);
-      const repos = await response.json();
-      allRepos = allRepos.concat(repos);
-      hasMore = repos.length === 100;
-      page++;
+  async function fetchAllRepos() {
+    const cachedRepos = await loadReposFromCache();
+
+    if (cachedRepos.length) {
+      renderRepos(cachedRepos);
+      return;
     }
 
-    // Filter only Java or TypeScript repos and sort by recent push
+    try {
+      let page = 1;
+      let allRepos = [];
+      let hasMore = true;
+
+      while (hasMore) {
+        const response = await fetch(`https://api.github.com/users/jvcataquiz/repos?per_page=100&page=${page}`, {
+          headers: {
+            Accept: 'application/vnd.github+json',
+            'User-Agent': 'portfolio-site'
+          }
+        });
+        const repos = await response.json();
+        allRepos = allRepos.concat(repos);
+        hasMore = repos.length === 100;
+        page++;
+      }
+
+      renderRepos(allRepos);
+    } catch (error) {
+      console.error('Failed to fetch repos:', error);
+    }
+  }
+
+  function renderRepos(allRepos) {
+    if (!featuredCarousel) return;
+
     const javaRepos = allRepos
       .filter(repo => repo.language === 'Java' || repo.language === 'TypeScript')
       .sort((a, b) => new Date(b.pushed_at) - new Date(a.pushed_at));
 
     if (repoCountElement) repoCountElement.textContent = javaRepos.length;
+    featuredCarousel.innerHTML = '';
 
     javaRepos.forEach(repo => {
       const projectCard = document.createElement('div');
       projectCard.className = 'project-card1';
 
       const desc = repo.description || 'No description available.';
-       const shortDesc = desc.length >= 100
+      const shortDesc = desc.length >= 100
         ? desc.substring(0, 100) + '...'
         : desc.padEnd(100, '\u00A0');
       const name = repo.name || 'No name available.';
       const shortName = name.length > 30 ? name.substring(0, 30) + '...' : name;
 
-      const emojiList = ["💻","🖥️","🖱️","⌨️","🕹️","📱","📡","🛠️","⚙️","🧩","🤖","🔋","💾","🗄️"];
+      const emojiList = ['💻', '🖥️', '🖱️', '⌨️', '🕹️', '📱', '📡', '🛠️', '⚙️', '🧩', '🤖', '🔋', '💾', '🗄️'];
       const emoji = emojiList[Math.floor(Math.random() * emojiList.length)];
 
       projectCard.innerHTML = `
@@ -49,7 +81,7 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>
           <div class="project-links">
             ${repo.html_url ? `<a href="${repo.html_url}" target="_blank" class="tag1">Code</a>` : ''}
-            <a href="#" class="tag1"><i class="fas fa-external-link-alt"></i> Live Demo</a>
+           
           </div>
         </div>
       `;

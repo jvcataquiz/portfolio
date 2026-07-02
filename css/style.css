@@ -515,7 +515,7 @@ nav {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 60px;
-    align-items: start;
+    align-items: center;
 }
 
 .about-image-container {
@@ -705,6 +705,14 @@ body.light-mode .developer-illustration {
     line-height: 1.8;
     margin-bottom: 20px;
     font-size: 16px;
+}
+
+.container p {
+    color: var(--text-secondary);
+    line-height: 1.8;
+    margin-bottom: 20px;
+    font-size: 16px;
+    text-align: justify;
 }
 .about-text li {
     color: var(--text-secondary);

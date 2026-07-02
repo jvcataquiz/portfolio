@@ -9,7 +9,8 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       const response = await fetch('./data/repos.json');
       if (!response.ok) throw new Error('Cache not found');
-      return await response.json();
+      const data = await response.json();
+      return Array.isArray(data) ? data : [];
     } catch (error) {
       console.warn('Using fallback because repo cache is unavailable.', error);
       return [];
@@ -42,6 +43,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }
           }
         );
+
+        if (!response.ok) {
+          throw new Error(`GitHub request failed with status ${response.status}`);
+        }
+
         const repos = await response.json();
         allRepos = allRepos.concat(repos);
         hasMore = repos.length === 100;

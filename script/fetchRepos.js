@@ -33,6 +33,11 @@ document.addEventListener('DOMContentLoaded', () => {
             'User-Agent': 'portfolio-site'
           }
         });
+
+        if (!response.ok) {
+          throw new Error(`GitHub request failed with status ${response.status}`);
+        }
+
         const repos = await response.json();
         allRepos = allRepos.concat(repos);
         hasMore = repos.length === 100;

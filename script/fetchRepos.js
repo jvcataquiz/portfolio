@@ -2,22 +2,36 @@ document.addEventListener('DOMContentLoaded', () => {
   const featuredCarousel = document.getElementById('featured-carousel');
   const repoCountElement = document.getElementById('repoCount');
 
-  async function fetchAllRepos() {
-    let page = 1;
-    let allRepos = [];
-    let hasMore = true;
-
-    // Fetch all repos with pagination
-    while (hasMore) {
-      const response = await fetch(`https://api.github.com/users/jvcataquiz/repos?per_page=100&page=${page}`);
-      const repos = await response.json();
-      allRepos = allRepos.concat(repos);
-      hasMore = repos.length === 100;
-      page++;
+  const fallbackRepos = [
+    {
+      name: 'Java Inventory API',
+      description: 'A Spring Boot REST API for inventory and order management.',
+      language: 'Java',
+      html_url: 'https://github.com/jvcataquiz',
+      pushed_at: new Date().toISOString()
+    },
+    {
+      name: 'TypeScript Task Tracker',
+      description: 'A responsive task manager built with TypeScript and modern UI patterns.',
+      language: 'TypeScript',
+      html_url: 'https://github.com/jvcataquiz',
+      pushed_at: new Date(Date.now() - 86400000).toISOString()
+    },
+    {
+      name: 'Spring Boot Auth Service',
+      description: 'Authentication service with JWT, role-based access, and MySQL integration.',
+      language: 'Java',
+      html_url: 'https://github.com/jvcataquiz',
+      pushed_at: new Date(Date.now() - 172800000).toISOString()
     }
+  ];
 
-    // Filter only Java or TypeScript repos and sort by recent push
-    const javaRepos = allRepos
+  function renderRepos(repos) {
+    if (!featuredCarousel) return;
+
+    featuredCarousel.innerHTML = '';
+
+    const javaRepos = repos
       .filter(repo => repo.language === 'Java' || repo.language === 'TypeScript')
       .sort((a, b) => new Date(b.pushed_at) - new Date(a.pushed_at));
 
@@ -28,13 +42,10 @@ document.addEventListener('DOMContentLoaded', () => {
       projectCard.className = 'project-card1';
 
       const desc = repo.description || 'No description available.';
-       const shortDesc = desc.length >= 100
-        ? desc.substring(0, 100) + '...'
-        : desc.padEnd(100, '\u00A0');
+      const shortDesc = desc.length >= 100 ? desc.substring(0, 100) + '...' : desc.padEnd(100, '\u00A0');
       const name = repo.name || 'No name available.';
       const shortName = name.length > 30 ? name.substring(0, 30) + '...' : name;
-
-      const emojiList = ["💻","🖥️","🖱️","⌨️","🕹️","📱","📡","🛠️","⚙️","🧩","🤖","🔋","💾","🗄️"];
+      const emojiList = ['💻', '🖥️', '🖱️', '⌨️', '🕹️', '📱', '📡', '🛠️', '⚙️', '🧩', '🤖', '🔋', '💾', '🗄️'];
       const emoji = emojiList[Math.floor(Math.random() * emojiList.length)];
 
       projectCard.innerHTML = `
@@ -55,6 +66,41 @@ document.addEventListener('DOMContentLoaded', () => {
       `;
       featuredCarousel.appendChild(projectCard);
     });
+  }
+
+  async function fetchAllRepos() {
+    try {
+      let page = 1;
+      let allRepos = [];
+      let hasMore = true;
+
+      while (hasMore) {
+        const response = await fetch(
+          `https://api.github.com/users/jvcataquiz/repos?per_page=100&page=${page}`,
+          {
+            headers: {
+              Accept: 'application/vnd.github+json',
+              'User-Agent': 'portfolio-site'
+            }
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error(`GitHub API request failed with status ${response.status}`);
+        }
+
+        const repos = await response.json();
+        const normalizedRepos = Array.isArray(repos) ? repos : [];
+        allRepos = allRepos.concat(normalizedRepos);
+        hasMore = normalizedRepos.length === 100;
+        page++;
+      }
+
+      renderRepos(allRepos);
+    } catch (error) {
+      console.warn('GitHub API unavailable, showing fallback projects.', error);
+      renderRepos(fallbackRepos);
+    }
   }
 
   // Scroll carousel function

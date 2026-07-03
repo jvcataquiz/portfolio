@@ -1,11 +1,12 @@
+
 [
-  { "file": "Spring Security 6.pdf", "title": "Spring Security 6" },
-  { "file": "Responsive Web Design.pdf", "title": "Responsive Web Design" },
-  { "file": "Programming for Intermediate Users Using Python.pdf", "title": "Programming for Intermediate Users Using Python" },
-  { "file": "Programming for Beginners Using Python.pdf", "title": "Programming for Beginners Using Python" },
-  { "file": "Master Hibernate and Jpa with Springboot.pdf", "title": "Master Hibernate and Jpa with Springboot" },
-  { "file": "Learn Spring Boot 3.pdf", "title": "Learn Spring Boot 3" },
-  { "file": "Backend web develpement 101.pdf", "title": "Backend web develpement 101" },
-  { "file": "AWS Well-Architected Foundations.pdf", "title": "AWS Well-Architected Foundations" },
-  { "file": "AWS Course Completion Certificate.pdf", "title": "AWS Course Completion Certificate" }
+  { "file": "https://drive.google.com/file/d/1mZCRFkZqYoDTRQno2u9aCnZxyG7Kcnrd/view", "title": "Spring Security 6" },
+  { "file": "https://drive.google.com/file/d/1zN_XQAbtnjkofhHTgkmNOj0zsQxMnzcm/view", "title": "Responsive Web Design" },
+  { "file": "https://drive.google.com/file/d/1MQw2r2Sc1dkaDiXDAuafLmHy_rpecEcL/view", "title": "Programming for Intermediate Users Using Python" },
+  { "file": "https://drive.google.com/file/d/1hQiDm0gu7mXqwlFwyHiOKm1VT0STURLZ/view", "title": "Programming for Beginners Using Python" },
+  { "file": "https://drive.google.com/file/d/12COrqY8Q9ww8A6s_CQATPqcV625XSbkM/view", "title": "Master Hibernate and Jpa with Springboot" },
+  { "file": "https://drive.google.com/file/d/1qp5qNdG5Kvtbj3MPcE4O00CV-zsBMlne/view", "title": "Learn Spring Boot 3" },
+  { "file": "https://drive.google.com/file/d/1ZryL3likwCCFelvajcy6uqN0-KR5F3Gl/view", "title": "Backend web develpement 101" },
+  { "file": "https://drive.google.com/file/d/1yW7yTx_UHjxWhdZRBH6FeCWmQ43y85Bv/view", "title": "AWS Well-Architected Foundations" },
+  { "file": "https://drive.google.com/file/d/1tc_OLM7ydxlKJXVTRVmWwuxKgKn0iSHl/view", "title": "AWS Course Completion Certificate" }
 ]

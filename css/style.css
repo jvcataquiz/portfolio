@@ -1019,7 +1019,7 @@ footer {
     .logo a {
         font-size: 15px;
     }
-    .pdf-viewer{height: 35vh;}
+    .pdf-viewer{height: 40vh;overflow:hidden;}
 
     .btn {
         /* width: 100%; */

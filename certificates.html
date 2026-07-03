@@ -261,13 +261,12 @@
     max-width:900px;
     width:min(100%, 90vw);
     border-radius:6px;
-    padding:28px 22px 22px;
+    padding:28px 0px;
     position:relative;
     transform:translateY(12px);
     transition:transform 0.22s ease;
     box-shadow:0 30px 80px -20px rgba(0,0,0,0.6);
-    overflow:hidden;
-  
+    overflow:hiddenn;
   }
   .overlay.open .modal{transform:translateY(0);}
   .modal::before{
@@ -308,11 +307,31 @@
     margin-bottom:22px;
   }
 
-  .pdf-viewer{margin:12px 0; max-height:82vh; overflow:auto; height: 64vh;}
+  .pdf-viewer{margin:12px 0; max-height:68vh; overflow:auto; height: 64vh;}
   .pdf-viewer iframe,
-  .pdf-viewer object{width:100%; height:100%; border:0; display:block;}
+  .pdf-viewer object{width:100%; height:100%; border:0; display:block; overflow: hidden;}
+ .pdf-viewer iframe{
+height: 600px;
+ /* xr 320px */
+
+}
   @media (max-width:520px){
-    .pdf-viewer{height:40vh;}
+     iframe{height:340vh;}
+
+  }
+@media (max-width: 414px){
+
+
+    iframe{
+     height: 330px;
+ /* xr 320px */
+    }
+}
+  @media (max-width: 992px){
+    .pdf-viewer iframe{
+     height:480px;
+ /* xr 320px */
+} 
   }
   .modal-grid div label{
     display:block;
@@ -406,228 +425,225 @@
 </div>
 
 <script>
-  // Load certificates from directory listing
-  let certificates = [];
-  // pagination state
-  let currentPage = 0;
-  function getItemsPerPage(){
-    return window.innerWidth <= 520 ? 5 : 9;
-  }
+ // Load certificates from directory listing
+let certificates = [];
+// pagination state
+let currentPage = 0;
+function getItemsPerPage(){
+  return window.innerWidth <= 520 ? 5 : 9;
+}
 
-  async function loadCertificates(){
-    const base = 'certificates/';
-    // Try manifest first (works on GitHub Pages)
-    try{
-      const res = await fetch(base + 'index.json');
-      if(res.ok){
-        const list = await res.json();
-        certificates = list.map(f=>{
-          const filename = (f.file || f).replace(/^(?:\.\/|\/)*/,'').split('/').pop();
-          return {
-            title: f.title || decodeURIComponent(filename).replace(/\.[^/.]+$/,'').replace(/[-_]/g,' '),
-            issuer: f.issuer || '',
-            category: f.category || 'Certificate',
-            date: f.date || '',
-            year: f.year || '',
-            credentialId: f.credentialId || '',
-            description: f.description || '',
-            credentialUrl: encodeURI(base + filename)
-          };
-        });
-        return;
-      }
-    }catch(e){/* ignore */}
+async function loadCertificates(){
+  const base = 'certificates/';
+  // Try manifest first (works on GitHub Pages)
+  try{
+    const res = await fetch(base + 'index.json');
+    if(res.ok){
+      const list = await res.json();
+      certificates = list.map(f=>{
+        const raw = (f.file || f);
+        // Convert common Drive link patterns to preview URL
+        let credentialUrl = raw;
+        const driveMatch = raw.match(/file\/d\/([a-zA-Z0-9_-]+)/);
+        if(driveMatch && driveMatch[1]){
+          credentialUrl = `https://drive.google.com/file/d/${driveMatch[1]}/preview`;
+        } else if(raw.includes('open?id=')){
+          const id = raw.split('open?id=')[1].split('&')[0];
+          credentialUrl = `https://drive.google.com/file/d/${id}/preview`;
+        } else if(raw.match(/\/view(?:\?.*)?$/)){
+          credentialUrl = raw.replace(/\/view(?:\?.*)?$/,'/preview');
+        }
 
-    // fallback: try directory listing (works on some hosts)
-    try{
-      const res2 = await fetch(base);
-      if(res2.ok){
-        const html = await res2.text();
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(html,'text/html');
-        const anchors = Array.from(doc.querySelectorAll('a'));
-
-        const files = anchors.map(a=>a.getAttribute('href')).filter(h=>h && h.match(/\.pdf$/i));
-        certificates = files.map(f=>{
-          const filename = f.replace(/^(?:\.\/|\/)*/,'').split('/').pop();
-          return {
-            title: decodeURIComponent(filename).replace(/\.[^/.]+$/,'').replace(/[-_]/g,' '),
-            issuer: '', category: 'Certificate', date:'', year:'', credentialId:'', description:'',
-            credentialUrl: encodeURI(base + filename)
-          };
-        });
-        return;
-      }
-    }catch(e){/* ignore */}
-  }
-
-  // initialize data then render
-  (async ()=>{ await loadCertificates(); renderChips(); renderGrid(); })();
-
-  // No active category by default; we won't render the 'All' chip
-  let activeCategory = "";
-  let searchTerm = "";
-
-  function getCategories(){
-    // Return unique categories but exclude the generic 'Certificate' category and empty values
-    return [...new Set(certificates.map(c => (c.category||'').trim()))]
-      .filter(cat => cat && cat.toLowerCase() !== 'certificate');
-  }
-
-  function renderChips(){
-    const chipsEl = document.getElementById('chips');
-    const categories = getCategories();
-    if(categories.length === 0){
-      chipsEl.innerHTML = '';
-      return;
-    }
-
-    chipsEl.innerHTML = categories.map(cat =>
-      `<button class="chip ${cat===activeCategory?'active':''}" data-cat="${cat}">${cat}</button>`
-    ).join('');
-    chipsEl.querySelectorAll('.chip').forEach(btn=>{
-      btn.addEventListener('click', ()=>{
-        activeCategory = btn.dataset.cat;
-        renderChips();
-        renderGrid();
+        const displayTitle = f.title || decodeURIComponent(String(raw).split('/').pop()).replace(/\.[^/.]+$/,'').replace(/[-_]/g,' ');
+        return {
+          title: displayTitle,
+          issuer: f.issuer || '',
+          category: f.category || 'Certificate',
+          date: f.date || '',
+          year: f.year || '',
+          credentialId: f.credentialId || '',
+          description: f.description || '',
+          credentialUrl
+        };
       });
-    });
-  }
-
-  function filtered(){
-    return certificates.filter(c=>{
-      const matchesCat = !activeCategory || c.category === activeCategory;
-      const term = searchTerm.toLowerCase();
-      const matchesSearch = !term ||
-        c.title.toLowerCase().includes(term) ||
-        c.issuer.toLowerCase().includes(term);
-      return matchesCat && matchesSearch;
-    });
-  }
-
-  function renderGrid(){
-    const grid = document.getElementById('grid');
-    const list = filtered();
-    const itemsPerPage = getItemsPerPage();
-    const totalPages = Math.max(1, Math.ceil(list.length / itemsPerPage));
-    if(currentPage >= totalPages) currentPage = 0;
-
-    document.getElementById('countLine').textContent =
-      `${list.length} credential${list.length!==1?'s':''} shown`;
-
-    if(list.length === 0){
-      // animate empty state
-      grid.classList.add('fade-out');
-      setTimeout(()=>{
-        grid.innerHTML = `<div class="empty">No certificates match your search.</div>`;
-        document.getElementById('pagination').innerHTML = '';
-        grid.classList.remove('fade-out');
-        grid.classList.add('fade-in');
-        setTimeout(()=>grid.classList.remove('fade-in'), 300);
-      }, 180);
       return;
     }
+  }catch(e){/* ignore */}
+}
 
-    const start = currentPage * itemsPerPage;
-    const pageItems = list.slice(start, start + itemsPerPage);
+// initialize data then render
+(async ()=>{ await loadCertificates(); renderChips(); renderGrid(); })();
 
-    // Fade out, replace content, then fade in
+// No active category by default; we won't render the 'All' chip
+let activeCategory = "";
+let searchTerm = "";
+
+function getCategories(){
+  // Return unique categories but exclude the generic 'Certificate' category and empty values
+  return [...new Set(certificates.map(c => (c.category||'').trim()))]
+    .filter(cat => cat && cat.toLowerCase() !== 'certificate');
+}
+
+function renderChips(){
+  const chipsEl = document.getElementById('chips');
+  const categories = getCategories();
+  if(categories.length === 0){
+    chipsEl.innerHTML = '';
+    return;
+  }
+
+  chipsEl.innerHTML = categories.map(cat =>
+    `<button class="chip ${cat===activeCategory?'active':''}" data-cat="${cat}">${cat}</button>`
+  ).join('');
+  chipsEl.querySelectorAll('.chip').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      activeCategory = btn.dataset.cat;
+      renderChips();
+      renderGrid();
+    });
+  });
+}
+
+function filtered(){
+  return certificates.filter(c=>{
+    const matchesCat = !activeCategory || c.category === activeCategory;
+    const term = searchTerm.toLowerCase();
+    const matchesSearch = !term ||
+      c.title.toLowerCase().includes(term) ||
+      c.issuer.toLowerCase().includes(term);
+    return matchesCat && matchesSearch;
+  });
+}
+
+function renderGrid(){
+  const grid = document.getElementById('grid');
+  const list = filtered();
+  const itemsPerPage = getItemsPerPage();
+  const totalPages = Math.max(1, Math.ceil(list.length / itemsPerPage));
+  if(currentPage >= totalPages) currentPage = 0;
+
+  document.getElementById('countLine').textContent =
+    `${list.length} credential${list.length!==1?'s':''} shown`;
+
+  if(list.length === 0){
+    // animate empty state
     grid.classList.add('fade-out');
     setTimeout(()=>{
-      grid.innerHTML = pageItems.map((c) => `
-      <div class="card" data-index="${certificates.indexOf(c)}">
-        <div class="card-top">
-          <span class="cat-tag">${c.category}</span>
-          <div class="seal"><span>'${c.year}</span></div>
-        </div>
-        <h3>${c.title}</h3>
-        <p class="issuer">${c.issuer}</p>
-        <div class="card-footer">
-          <span class="date">${c.date}</span>
-          <span class="credential-id">${c.credentialId}</span>
-        </div>
-      </div>
-    `).join('');
-
-      grid.querySelectorAll('.card').forEach(card=>{
-        card.addEventListener('click', ()=> openModal(certificates[card.dataset.index]));
-      });
-
+      grid.innerHTML = `<div class="empty">No certificates match your search.</div>`;
+      document.getElementById('pagination').innerHTML = '';
       grid.classList.remove('fade-out');
       grid.classList.add('fade-in');
       setTimeout(()=>grid.classList.remove('fade-in'), 300);
-
-      renderPagination(totalPages);
     }, 180);
+    return;
   }
 
-  function renderPagination(totalPages){
-    const pager = document.getElementById('pagination');
-    if(!pager) return;
-    if(totalPages <= 1){ pager.innerHTML = ''; return; }
-    let html = '';
-    html += `<button id="prevPage" ${currentPage===0?'disabled':''} aria-label="Previous page">Prev</button>`;
-    for(let i=0;i<totalPages;i++){
-      html += `<button class="${i===currentPage?'active':''}" data-page="${i}">${i+1}</button>`;
-    }
-    html += `<button id="nextPage" ${currentPage===totalPages-1?'disabled':''} aria-label="Next page">Next</button>`;
-    pager.innerHTML = html;
-    pager.querySelectorAll('button[data-page]').forEach(b=> b.addEventListener('click', ()=> gotoPage(parseInt(b.dataset.page))));
-    const prev = pager.querySelector('#prevPage');
-    const next = pager.querySelector('#nextPage');
-    prev && prev.addEventListener('click', ()=> gotoPage(Math.max(0, currentPage-1)));
-    next && next.addEventListener('click', ()=> gotoPage(Math.min(totalPages-1, currentPage+1)));
-  }
+  const start = currentPage * itemsPerPage;
+  const pageItems = list.slice(start, start + itemsPerPage);
 
-  function gotoPage(n){ currentPage = n; renderGrid(); window.scrollTo({top: document.getElementById('grid').offsetTop - 80, behavior:'smooth'}); }
-
-  window.addEventListener('resize', ()=>{ currentPage = 0; renderGrid(); });
-
-  function openModal(c){
-    const modal = document.getElementById('modalContent');
-    const isPdf = !!(c.credentialUrl && c.credentialUrl.match(/\.pdf$/i));
-    const viewerMarkup = isPdf ? `
-      <div class="pdf-viewer">
-        <iframe src="${c.credentialUrl}" title="${c.title}" loading="lazy"></iframe>
+  // Fade out, replace content, then fade in
+  grid.classList.add('fade-out');
+  setTimeout(()=>{
+    grid.innerHTML = pageItems.map((c) => `
+    <div class="card" data-index="${certificates.indexOf(c)}">
+      <div class="card-top">
+        <span class="cat-tag">${c.category}</span>
+        <div class="seal"><span>'${c.year}</span></div>
       </div>
-    ` : '';
-    const viewAction = isPdf ? '' : `<a class="btn btn-primary" href="${c.credentialUrl}" target="_blank" rel="noopener noreferrer">View credential</a>`;
-
-    modal.innerHTML = `
-      <button class="modal-close" id="modalClose">&times;</button>
-      <span class="cat-tag">${c.category}</span>
-      <h2>${c.title}</h2>
+      <h3>${c.title}</h3>
       <p class="issuer">${c.issuer}</p>
-      <p class="modal-desc">${c.description}</p>
-      ${viewerMarkup}
-      <div class="modal-actions">
-        ${viewAction}
-        <button class="btn btn-ghost" id="modalCloseBtn">Close</button>
+      <div class="card-footer">
+        <span class="date">${c.date}</span>
+        <span class="credential-id">${c.credentialId}</span>
       </div>
-    `;
-    document.getElementById('overlay').classList.add('open');
-    document.getElementById('modalClose').addEventListener('click', closeModal);
-    document.getElementById('modalCloseBtn').addEventListener('click', closeModal);
+    </div>
+  `).join('');
+
+    grid.querySelectorAll('.card').forEach(card=>{
+      card.addEventListener('click', ()=> openModal(certificates[card.dataset.index]));
+    });
+
+    grid.classList.remove('fade-out');
+    grid.classList.add('fade-in');
+    setTimeout(()=>grid.classList.remove('fade-in'), 300);
+
+    renderPagination(totalPages);
+  }, 180);
+}
+
+function renderPagination(totalPages){
+  const pager = document.getElementById('pagination');
+  if(!pager) return;
+  if(totalPages <= 1){ pager.innerHTML = ''; return; }
+  let html = '';
+  html += `<button id="prevPage" ${currentPage===0?'disabled':''} aria-label="Previous page">Prev</button>`;
+  for(let i=0;i<totalPages;i++){
+    html += `<button class="${i===currentPage?'active':''}" data-page="${i}">${i+1}</button>`;
   }
+  html += `<button id="nextPage" ${currentPage===totalPages-1?'disabled':''} aria-label="Next page">Next</button>`;
+  pager.innerHTML = html;
+  pager.querySelectorAll('button[data-page]').forEach(b=> b.addEventListener('click', ()=> gotoPage(parseInt(b.dataset.page))));
+  const prev = pager.querySelector('#prevPage');
+  const next = pager.querySelector('#nextPage');
+  prev && prev.addEventListener('click', ()=> gotoPage(Math.max(0, currentPage-1)));
+  next && next.addEventListener('click', ()=> gotoPage(Math.min(totalPages-1, currentPage+1)));
+}
 
-  function closeModal(){
-    document.getElementById('overlay').classList.remove('open');
-  }
+function gotoPage(n){ currentPage = n; renderGrid(); window.scrollTo({top: document.getElementById('grid').offsetTop - 80, behavior:'smooth'}); }
 
-  document.getElementById('overlay').addEventListener('click', (e)=>{
-    if(e.target.id === 'overlay') closeModal();
-  });
-  document.addEventListener('keydown', (e)=>{
-    if(e.key === 'Escape') closeModal();
-  });
+window.addEventListener('resize', ()=>{ currentPage = 0; renderGrid(); });
 
-  document.getElementById('searchInput').addEventListener('input', (e)=>{
-    searchTerm = e.target.value;
-    renderGrid();
-  });
+function isEmbeddableCredential(url){
+  if(!url) return false;
+  return url.includes('drive.google.com/file/d/') || url.includes('/preview');
+}
 
-  renderChips();
+function openModal(c){
+  const modal = document.getElementById('modalContent');
+  const isEmbeddable = isEmbeddableCredential(c.credentialUrl);
+  const viewerMarkup = isEmbeddable ? `
+    <div class="pdf-viewer">
+      <iframe src="${c.credentialUrl}" title="${c.title}" width="100%" height="480" allow="autoplay"></iframe>
+    </div>
+  ` : '';
+  const viewAction = isEmbeddable ? '' : `<a class="btn btn-primary" href="${c.credentialUrl}" target="_blank" rel="noopener noreferrer">View credential</a>`;
+
+  modal.innerHTML = `
+    <button class="modal-close" id="modalClose">&times;</button>
+    <span class="cat-tag">${c.category}</span>
+    <h2>${c.title}</h2>
+    <p class="issuer">${c.issuer}</p>
+    <p class="modal-desc">${c.description}</p>
+    ${viewerMarkup}
+    <div class="modal-actions">
+      ${viewAction}
+      <button class="btn btn-ghost" id="modalCloseBtn">Close</button>
+    </div>
+  `;
+  document.getElementById('overlay').classList.add('open');
+  document.getElementById('modalClose').addEventListener('click', closeModal);
+  document.getElementById('modalCloseBtn').addEventListener('click', closeModal);
+}
+
+function closeModal(){
+  document.getElementById('overlay').classList.remove('open');
+}
+
+document.getElementById('overlay').addEventListener('click', (e)=>{
+  if(e.target.id === 'overlay') closeModal();
+});
+document.addEventListener('keydown', (e)=>{
+  if(e.key === 'Escape') closeModal();
+});
+
+document.getElementById('searchInput').addEventListener('input', (e)=>{
+  searchTerm = e.target.value;
   renderGrid();
+});
+
+renderChips();
+renderGrid();
+
 
 </script>
 

@@ -307,11 +307,12 @@
     margin-bottom:22px;
   }
 
-  /* PDF viewer sizing */  .pdf-viewer{margin:12px 0; overflow:hidden;}  .pdf-viewer{margin:12px 0; max-height:68vh; overflow:auto;}
+  .pdf-viewer{margin:12px 0; max-height:68vh; overflow:auto; height: 65vh;}
   .pdf-viewer iframe,
   .pdf-viewer object{width:100%; height:100%; border:0; display:block;}
-  .pdf-fallback{padding:18px 16px; background:rgba(255,255,255,0.94); border-radius:8px; text-align:center;}
-  .pdf-fallback p{margin:0 0 14px; color:var(--muted);}
+  @media (max-width:520px){
+    .pdf-viewer{height:35vh;}
+  }
   .modal-grid div label{
     display:block;
     font-family:'JetBrains Mono', monospace;
@@ -377,13 +378,6 @@
         <div id="navbar"></div>
     </header>
 <script src="script/navbar.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.9.179/pdf.min.js"></script>
-  <script>
-    if(window.pdfjsLib){
-      window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.9.179/pdf.worker.min.js';
-    }
-  </script>
-  
   <div class="wrap">
      <div class="header1">
     <div class="eyebrow">Credentials Wall</div>
@@ -411,7 +405,7 @@
 </div>
 
 <script>
-  // Load certificates from certificates/index.json or directory listing
+  // Load certificates from directory listing
   let certificates = [];
   // pagination state
   let currentPage = 0;
@@ -421,33 +415,14 @@
 
   async function loadCertificates(){
     const base = 'certificates/';
-    // try index.json first
     try{
-      const res = await fetch(base + 'index.json');
+      const res = await fetch(base);
       if(res.ok){
-        const list = await res.json();
-        certificates = list.map(f=>({
-          title: f.title || (f.file || f).replace(/\.[^/.]+$/,'').replace(/[-_]/g,' '),
-          issuer: f.issuer || '',
-          category: f.category || 'Certificate',
-          date: f.date || '',
-          year: f.year || '',
-          credentialId: f.credentialId || '',
-          description: f.description || '',
-          credentialUrl: f.url || (base + (f.file || f))
-        }));
-        return;
-      }
-    }catch(e){/* ignore */}
-
-    // fallback: try directory listing (works on some hosts)
-    try{
-      const res2 = await fetch(base);
-      if(res2.ok){
-        const html = await res2.text();
+        const html = await res.text();
         const parser = new DOMParser();
         const doc = parser.parseFromString(html,'text/html');
         const anchors = Array.from(doc.querySelectorAll('a'));
+
         const files = anchors.map(a=>a.getAttribute('href')).filter(h=>h && h.match(/\.pdf$/i));
         certificates = files.map(f=>{
           const filename = f.replace(/^(?:\.\/|\/)*/,'').split('/').pop();
@@ -584,44 +559,12 @@
 
   window.addEventListener('resize', ()=>{ currentPage = 0; renderGrid(); });
 
-  async function loadPdfDocument(url){
-    if(!window.pdfjsLib) return;
-    try{
-      const loadingTask = window.pdfjsLib.getDocument(url);
-      const pdf = await loadingTask.promise;
-      return pdf;
-    }catch(err){
-      console.warn('PDF load failed', err);
-      return null;
-    }
-  }
-
-  async function renderPdfPage(pdf, pageNumber){
-    const viewer = document.getElementById('pdfViewer');
-    if(!viewer || !pdf) return;
-    const page = await pdf.getPage(pageNumber);
-    const viewport = page.getViewport({scale: 1});
-    const containerWidth = Math.max(280, Math.min(viewer.clientWidth, window.innerWidth - 64));
-    const scale = containerWidth / viewport.width;
-    const scaledViewport = page.getViewport({scale});
-    viewer.innerHTML = '';
-    const canvas = document.createElement('canvas');
-    canvas.className = 'pdf-page-canvas';
-    canvas.width = Math.floor(scaledViewport.width);
-    canvas.height = Math.floor(scaledViewport.height - 2); // slight reduction to avoid overflow
-    viewer.appendChild(canvas);
-    const context = canvas.getContext('2d');
-    await page.render({canvasContext: context, viewport: scaledViewport}).promise;
-    document.getElementById('pdfPageLabel').textContent = `Page ${pageNumber} of ${pdf.numPages}`;
-  }
-
   function openModal(c){
     const modal = document.getElementById('modalContent');
     const isPdf = !!(c.credentialUrl && c.credentialUrl.match(/\.pdf$/i));
     const viewerMarkup = isPdf ? `
       <div class="pdf-viewer">
-        <div id="pdfViewer"></div>
-        
+        <iframe src="${c.credentialUrl}" title="${c.title}" loading="lazy"></iframe>
       </div>
     ` : '';
     const viewAction = isPdf ? '' : `<a class="btn btn-primary" href="${c.credentialUrl}" target="_blank" rel="noopener noreferrer">View credential</a>`;
@@ -641,29 +584,10 @@
     document.getElementById('overlay').classList.add('open');
     document.getElementById('modalClose').addEventListener('click', closeModal);
     document.getElementById('modalCloseBtn').addEventListener('click', closeModal);
-    if(isPdf && window.pdfjsLib){
-      loadPdfDocument(c.credentialUrl).then(pdf=>{
-        if(!pdf) return;
-        let currentPage = 1;
-        renderPdfPage(pdf, currentPage);
-        document.getElementById('prevPdfPage').addEventListener('click', ()=>{
-          if(currentPage <= 1) return;
-          currentPage -= 1;
-          renderPdfPage(pdf, currentPage);
-        });
-        document.getElementById('nextPdfPage').addEventListener('click', ()=>{
-          if(currentPage >= pdf.numPages) return;
-          currentPage += 1;
-          renderPdfPage(pdf, currentPage);
-        });
-      });
-    }
   }
 
   function closeModal(){
     document.getElementById('overlay').classList.remove('open');
-    const viewer = document.getElementById('pdfViewer');
-    if(viewer) viewer.innerHTML = '';
   }
 
   document.getElementById('overlay').addEventListener('click', (e)=>{

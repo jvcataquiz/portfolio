@@ -415,10 +415,33 @@
 
   async function loadCertificates(){
     const base = 'certificates/';
+    // Try manifest first (works on GitHub Pages)
     try{
-      const res = await fetch(base);
+      const res = await fetch(base + 'index.json');
       if(res.ok){
-        const html = await res.text();
+        const list = await res.json();
+        certificates = list.map(f=>{
+          const filename = (f.file || f).replace(/^(?:\.\/|\/)*/,'').split('/').pop();
+          return {
+            title: f.title || decodeURIComponent(filename).replace(/\.[^/.]+$/,'').replace(/[-_]/g,' '),
+            issuer: f.issuer || '',
+            category: f.category || 'Certificate',
+            date: f.date || '',
+            year: f.year || '',
+            credentialId: f.credentialId || '',
+            description: f.description || '',
+            credentialUrl: encodeURI(base + filename)
+          };
+        });
+        return;
+      }
+    }catch(e){/* ignore */}
+
+    // fallback: try directory listing (works on some hosts)
+    try{
+      const res2 = await fetch(base);
+      if(res2.ok){
+        const html = await res2.text();
         const parser = new DOMParser();
         const doc = parser.parseFromString(html,'text/html');
         const anchors = Array.from(doc.querySelectorAll('a'));
@@ -429,7 +452,7 @@
           return {
             title: decodeURIComponent(filename).replace(/\.[^/.]+$/,'').replace(/[-_]/g,' '),
             issuer: '', category: 'Certificate', date:'', year:'', credentialId:'', description:'',
-            credentialUrl: base + filename
+            credentialUrl: encodeURI(base + filename)
           };
         });
         return;

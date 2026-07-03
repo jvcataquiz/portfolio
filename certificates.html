@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Credentials Wall</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Source+Serif+4:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<!-- Use main site theme to align colors -->
+<link rel="stylesheet" href="css/style.css">
+<style>
+  /* Map local palette variables to main site variables for consistent look */
+  :root{
+    --ink: var(--bg-primary);
+    --ink-soft: var(--bg-secondary);
+    --parchment: var(--bg-card);
+    --parchment-dim: rgba(255,255,255,0.02);
+    --gold: var(--accent-color);
+    --gold-bright: var(--accent-color);
+    --seal: #7A2E2E;
+    --text-ink: var(--text-primary);
+    --muted: var(--text-secondary);
+    --muted-light: var(--text-tertiary);
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--ink);
+    color:var(--text-primary);
+    font-family:'Source Serif 4', serif;
+    min-height:100vh;
+   
+  }
+
+  .wrap{max-width:1180px;margin:0 auto; padding: 40px 24px 80px;
+    position:relative; z-index:1; /* Ensure content sits above the animated canvas */
+  }
+
+  .eyebrow{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    letter-spacing:0.25em;
+    text-transform:uppercase;
+    color:var(--gold-bright);
+    margin-bottom:14px;
+  }
+  h1{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size:clamp(32px, 5vw, 52px);
+    margin:0 0 10px;
+    letter-spacing:-0.01em;
+  }
+
+    /* Fullscreen animated background canvas */
+    #code-canvas{position:fixed; inset:0; width:100%; height:100%; z-index:0; pointer-events:none;}
+
+  .controls{
+    display:flex;
+    gap:12px;
+    flex-wrap:wrap;
+    align-items:center;
+    justify-content:center;
+    margin-bottom:40px;
+  }
+  .search-box{
+    position:relative;
+    width:280px;
+  }
+  .search-box input{
+    width:100%;
+    background:var(--ink-soft);
+    border:1px solid rgba(176,141,87,0.3);
+    color:var(--parchment);
+    padding:11px 14px 11px 38px;
+    border-radius:6px;
+    font-family:'Source Serif 4', serif;
+    font-size:14px;
+    outline:none;
+    transition:border-color 0.2s;
+  }
+  .search-box input:focus{border-color:var(--gold-bright);}
+  .search-box input::placeholder{color:var(--muted-light);}
+  .search-box svg{
+    position:absolute;
+    left:12px;
+    top:50%;
+    transform:translateY(-50%);
+    width:15px;height:15px;
+    stroke:var(--muted-light);
+  }
+
+  .chip{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11.5px;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    padding:9px 16px;
+    border-radius:20px;
+    border:1px solid rgba(176,141,87,0.3);
+    background:transparent;
+    color:var(--muted-light);
+    cursor:pointer;
+    transition:all 0.2s;
+  }
+  .chip:hover{border-color:var(--gold-bright); color:var(--parchment);}
+  .chip.active{
+    background:var(--gold);
+    border-color:var(--gold);
+    color:var(--ink);
+    font-weight:600;
+  }
+
+  .count-line{
+    text-align:center;
+    font-family:'JetBrains Mono', monospace;
+    font-size:11.5px;
+    color:var(--muted-light);
+    letter-spacing:0.05em;
+    margin-bottom:28px;
+    text-transform:uppercase;
+  }
+
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(3, 1fr); /* 3 columns on desktop */
+    gap:26px;
+  }
+
+  /* Grid fade transition for pagination */
+  .grid.fade-out{opacity:0;transform:translateY(6px);transition:opacity 220ms ease, transform 220ms ease}
+  .grid.fade-in{opacity:1;transform:none;transition:opacity 220ms ease, transform 220ms ease}
+
+  .card{
+    background:var(--parchment);
+    color:var(--text-ink);
+    border-radius:3px;
+    padding:26px 24px 22px;
+    position:relative;
+    cursor:pointer;
+    box-shadow:0 1px 2px rgba(0,0,0,0.2), 0 12px 28px -14px rgba(0,0,0,0.45);
+    transition:transform 0.22s ease, box-shadow 0.22s ease;
+    border:1px solid rgba(0,0,0,0.06);
+    overflow:hidden;
+  }
+  .card::before{
+    content:"";
+    position:absolute;
+    top:0;left:0;right:0;
+    height:5px;
+    background:linear-gradient(90deg, var(--gold), var(--seal) 130%);
+  }
+  .card:hover{
+    transform:translateY(-4px);
+    box-shadow:0 4px 10px rgba(0,0,0,0.22), 0 20px 36px -14px rgba(0,0,0,0.5);
+  }
+
+  .card-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:12px;
+    margin-bottom:18px;
+  }
+  .cat-tag{
+    font-family:'JetBrains Mono', monospace;
+    font-size:10px;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    color:var(--seal);
+    background:rgba(122,46,46,0.08);
+    padding:4px 9px;
+    border-radius:3px;
+  }
+
+  .seal{
+    width:46px;height:46px;
+    border-radius:50%;
+    border:1.5px solid var(--gold);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex-shrink:0;
+    transform:rotate(-8deg);
+    position:relative;
+  }
+  .seal::before{
+    content:"";
+    position:absolute;
+    inset:4px;
+    border-radius:50%;
+    border:1px dashed var(--gold);
+  }
+  .seal span{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    font-weight:600;
+    color:var(--gold);
+  }
+
+  .card h3{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size:19px;
+    line-height:1.28;
+    margin:0 0 8px;
+  }
+  .issuer{
+    font-size:14px;
+    color:var(--muted);
+    margin:0 0 16px;
+  }
+
+  .card-footer{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding-top:14px;
+    border-top:1px dashed rgba(43,38,32,0.2);
+  }
+  .date{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11.5px;
+    color:var(--muted);
+  }
+  .credential-id{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    color:var(--muted);
+    opacity:0.75;
+  }
+
+  .empty{
+    grid-column:1/-1;
+    text-align:center;
+    padding:60px 20px;
+    color:var(--muted-light);
+    font-family:'JetBrains Mono', monospace;
+    font-size:13px;
+    letter-spacing:0.03em;
+  }
+
+  /* Modal */
+  .overlay{
+    position:fixed; inset:0;
+    background:rgba(15,19,26,0.72);
+    backdrop-filter:blur(3px);
+    display:flex; align-items:center; justify-content:center;
+    padding:24px;
+    z-index:9999;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity 0.2s ease;
+  }
+  .overlay.open{opacity:1; pointer-events:auto;}
+
+  .modal{
+    background:var(--parchment);
+    color:var(--text-ink);
+    max-width:900px;
+    width:min(100%, 90vw);
+    border-radius:6px;
+    padding:28px 22px 22px;
+    position:relative;
+    transform:translateY(12px);
+    transition:transform 0.22s ease;
+    box-shadow:0 30px 80px -20px rgba(0,0,0,0.6);
+    overflow:hidden;
+  }
+  .overlay.open .modal{transform:translateY(0);}
+  .modal::before{
+    content:"";
+    position:absolute; top:0; left:0; right:0; height:6px;
+    background:linear-gradient(90deg, var(--gold), var(--seal) 130%);
+  }
+  .modal-close{
+    position:absolute; top:18px; right:18px;
+    width:30px;height:30px;
+    border-radius:50%;
+    border:1px solid rgba(43,38,32,0.2);
+    background:transparent;
+    cursor:pointer;
+    color:var(--text-ink);
+    font-size:16px;
+    line-height:1;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .modal-close:hover{background:rgba(43,38,32,0.06);}
+
+  .modal .cat-tag{margin-bottom:16px; display:inline-block;}
+  .modal h2{
+    font-family:'Fraunces', serif;
+    font-size:26px;
+    font-weight:700;
+    margin:0 0 6px;
+    line-height:1.25;
+  }
+  .modal .issuer{font-size:15px; margin-bottom:22px;}
+  .modal-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:16px;
+    padding:18px 0;
+    border-top:1px dashed rgba(43,38,32,0.2);
+    border-bottom:1px dashed rgba(43,38,32,0.2);
+    margin-bottom:22px;
+  }
+
+  /* PDF viewer sizing */  .pdf-viewer{margin:12px 0; overflow:hidden;}  .pdf-viewer{margin:12px 0; max-height:68vh; overflow:auto;}
+  .pdf-viewer iframe,
+  .pdf-viewer object{width:100%; height:100%; border:0; display:block;}
+  .pdf-fallback{padding:18px 16px; background:rgba(255,255,255,0.94); border-radius:8px; text-align:center;}
+  .pdf-fallback p{margin:0 0 14px; color:var(--muted);}
+  .modal-grid div label{
+    display:block;
+    font-family:'JetBrains Mono', monospace;
+    font-size:10px;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    color:var(--muted);
+    margin-bottom:5px;
+  }
+  .modal-grid div span{font-size:14px; font-weight:500;}
+  .modal-desc{font-size:14px; line-height:1.65; color:#4a4438; margin-bottom:24px;}
+  .modal-actions{display:flex; gap:10px;}
+  .btn{
+    font-family:'JetBrains Mono', monospace;
+    font-size:12px;
+    letter-spacing:0.03em;
+    text-transform:uppercase;
+    padding:11px 18px;
+    border-radius:5px;
+    border:none;
+    cursor:pointer;
+    text-decoration:none;
+    display:inline-block;
+  }
+  .btn-primary{background:var(--ink); color:var(--parchment);}
+  .btn-primary:hover{background:var(--ink-soft);}
+  .btn-ghost{background:transparent; border:1px solid rgba(43,38,32,0.25); color:var(--text-ink);}
+  .btn-ghost:hover{background:rgba(43,38,32,0.05);}
+
+  @media (max-width:520px){
+    .grid{grid-template-columns:1fr;}
+    .modal-grid{grid-template-columns:1fr;}
+  }
+  /* Pagination */
+  .pagination{display:flex;gap:8px;justify-content:center;align-items:center;margin-top:28px;}
+  .pagination button{background:transparent;border:1px solid rgba(176,141,87,0.18);color:var(--muted-light);padding:8px 12px;border-radius:6px;cursor:pointer}
+  .pagination button.active{background:var(--gold);border-color:var(--gold);color:var(--ink);font-weight:600}
+  .pagination button:disabled{opacity:0.35;cursor:default}
+    .header1{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    text-align:center;
+    margin-bottom:48px;
+    margin-top: 2rem;
+  }
+    .header p{
+    color:var(--muted-light);
+    font-size:16px;
+    max-width:480px;
+    margin:0;
+    line-height:1.5;
+  }
+  #footer{
+    position:relative;
+    z-index:100; /* Ensure footer sits above the animated canvas */
+  }
+</style>
+</head>
+<body>
+  <canvas id="code-canvas"></canvas>
+  <header id="header">
+        <div id="navbar"></div>
+    </header>
+<script src="script/navbar.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.9.179/pdf.min.js"></script>
+  <script>
+    if(window.pdfjsLib){
+      window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.9.179/pdf.worker.min.js';
+    }
+  </script>
+  
+  <div class="wrap">
+     <div class="header1">
+    <div class="eyebrow">Credentials Wall</div>
+    <h1>Certifications &amp; Credentials</h1>
+    <p>A record of completed courses, licenses, and professional certifications — click any entry for details.</p>
+     </div>
+  <div class="controls">
+    <div class="search-box">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
+      <input id="searchInput" type="text" placeholder="Search certificates or issuers…">
+    </div>
+    <div id="chips" class="chips" style="display:flex; gap:8px; flex-wrap:wrap;"></div>
+  </div>
+
+  <div class="count-line" id="countLine"></div>
+
+  <div class="grid" id="grid"></div>
+  <div id="pagination" class="pagination" aria-label="Certificates pagination"></div>
+  <br>
+
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="modal" id="modalContent"></div>
+</div>
+
+<script>
+  // Load certificates from certificates/index.json or directory listing
+  let certificates = [];
+  // pagination state
+  let currentPage = 0;
+  function getItemsPerPage(){
+    return window.innerWidth <= 520 ? 5 : 9;
+  }
+
+  async function loadCertificates(){
+    const base = 'certificates/';
+    // try index.json first
+    try{
+      const res = await fetch(base + 'index.json');
+      if(res.ok){
+        const list = await res.json();
+        certificates = list.map(f=>({
+          title: f.title || (f.file || f).replace(/\.[^/.]+$/,'').replace(/[-_]/g,' '),
+          issuer: f.issuer || '',
+          category: f.category || 'Certificate',
+          date: f.date || '',
+          year: f.year || '',
+          credentialId: f.credentialId || '',
+          description: f.description || '',
+          credentialUrl: f.url || (base + (f.file || f))
+        }));
+        return;
+      }
+    }catch(e){/* ignore */}
+
+    // fallback: try directory listing (works on some hosts)
+    try{
+      const res2 = await fetch(base);
+      if(res2.ok){
+        const html = await res2.text();
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html,'text/html');
+        const anchors = Array.from(doc.querySelectorAll('a'));
+        const files = anchors.map(a=>a.getAttribute('href')).filter(h=>h && h.match(/\.pdf$/i));
+        certificates = files.map(f=>{
+          const filename = f.replace(/^(?:\.\/|\/)*/,'').split('/').pop();
+          return {
+            title: decodeURIComponent(filename).replace(/\.[^/.]+$/,'').replace(/[-_]/g,' '),
+            issuer: '', category: 'Certificate', date:'', year:'', credentialId:'', description:'',
+            credentialUrl: base + filename
+          };
+        });
+        return;
+      }
+    }catch(e){/* ignore */}
+  }
+
+  // initialize data then render
+  (async ()=>{ await loadCertificates(); renderChips(); renderGrid(); })();
+
+  // No active category by default; we won't render the 'All' chip
+  let activeCategory = "";
+  let searchTerm = "";
+
+  function getCategories(){
+    // Return unique categories but exclude the generic 'Certificate' category and empty values
+    return [...new Set(certificates.map(c => (c.category||'').trim()))]
+      .filter(cat => cat && cat.toLowerCase() !== 'certificate');
+  }
+
+  function renderChips(){
+    const chipsEl = document.getElementById('chips');
+    const categories = getCategories();
+    if(categories.length === 0){
+      chipsEl.innerHTML = '';
+      return;
+    }
+
+    chipsEl.innerHTML = categories.map(cat =>
+      `<button class="chip ${cat===activeCategory?'active':''}" data-cat="${cat}">${cat}</button>`
+    ).join('');
+    chipsEl.querySelectorAll('.chip').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        activeCategory = btn.dataset.cat;
+        renderChips();
+        renderGrid();
+      });
+    });
+  }
+
+  function filtered(){
+    return certificates.filter(c=>{
+      const matchesCat = !activeCategory || c.category === activeCategory;
+      const term = searchTerm.toLowerCase();
+      const matchesSearch = !term ||
+        c.title.toLowerCase().includes(term) ||
+        c.issuer.toLowerCase().includes(term);
+      return matchesCat && matchesSearch;
+    });
+  }
+
+  function renderGrid(){
+    const grid = document.getElementById('grid');
+    const list = filtered();
+    const itemsPerPage = getItemsPerPage();
+    const totalPages = Math.max(1, Math.ceil(list.length / itemsPerPage));
+    if(currentPage >= totalPages) currentPage = 0;
+
+    document.getElementById('countLine').textContent =
+      `${list.length} credential${list.length!==1?'s':''} shown`;
+
+    if(list.length === 0){
+      // animate empty state
+      grid.classList.add('fade-out');
+      setTimeout(()=>{
+        grid.innerHTML = `<div class="empty">No certificates match your search.</div>`;
+        document.getElementById('pagination').innerHTML = '';
+        grid.classList.remove('fade-out');
+        grid.classList.add('fade-in');
+        setTimeout(()=>grid.classList.remove('fade-in'), 300);
+      }, 180);
+      return;
+    }
+
+    const start = currentPage * itemsPerPage;
+    const pageItems = list.slice(start, start + itemsPerPage);
+
+    // Fade out, replace content, then fade in
+    grid.classList.add('fade-out');
+    setTimeout(()=>{
+      grid.innerHTML = pageItems.map((c) => `
+      <div class="card" data-index="${certificates.indexOf(c)}">
+        <div class="card-top">
+          <span class="cat-tag">${c.category}</span>
+          <div class="seal"><span>'${c.year}</span></div>
+        </div>
+        <h3>${c.title}</h3>
+        <p class="issuer">${c.issuer}</p>
+        <div class="card-footer">
+          <span class="date">${c.date}</span>
+          <span class="credential-id">${c.credentialId}</span>
+        </div>
+      </div>
+    `).join('');
+
+      grid.querySelectorAll('.card').forEach(card=>{
+        card.addEventListener('click', ()=> openModal(certificates[card.dataset.index]));
+      });
+
+      grid.classList.remove('fade-out');
+      grid.classList.add('fade-in');
+      setTimeout(()=>grid.classList.remove('fade-in'), 300);
+
+      renderPagination(totalPages);
+    }, 180);
+  }
+
+  function renderPagination(totalPages){
+    const pager = document.getElementById('pagination');
+    if(!pager) return;
+    if(totalPages <= 1){ pager.innerHTML = ''; return; }
+    let html = '';
+    html += `<button id="prevPage" ${currentPage===0?'disabled':''} aria-label="Previous page">Prev</button>`;
+    for(let i=0;i<totalPages;i++){
+      html += `<button class="${i===currentPage?'active':''}" data-page="${i}">${i+1}</button>`;
+    }
+    html += `<button id="nextPage" ${currentPage===totalPages-1?'disabled':''} aria-label="Next page">Next</button>`;
+    pager.innerHTML = html;
+    pager.querySelectorAll('button[data-page]').forEach(b=> b.addEventListener('click', ()=> gotoPage(parseInt(b.dataset.page))));
+    const prev = pager.querySelector('#prevPage');
+    const next = pager.querySelector('#nextPage');
+    prev && prev.addEventListener('click', ()=> gotoPage(Math.max(0, currentPage-1)));
+    next && next.addEventListener('click', ()=> gotoPage(Math.min(totalPages-1, currentPage+1)));
+  }
+
+  function gotoPage(n){ currentPage = n; renderGrid(); window.scrollTo({top: document.getElementById('grid').offsetTop - 80, behavior:'smooth'}); }
+
+  window.addEventListener('resize', ()=>{ currentPage = 0; renderGrid(); });
+
+  async function loadPdfDocument(url){
+    if(!window.pdfjsLib) return;
+    try{
+      const loadingTask = window.pdfjsLib.getDocument(url);
+      const pdf = await loadingTask.promise;
+      return pdf;
+    }catch(err){
+      console.warn('PDF load failed', err);
+      return null;
+    }
+  }
+
+  async function renderPdfPage(pdf, pageNumber){
+    const viewer = document.getElementById('pdfViewer');
+    if(!viewer || !pdf) return;
+    const page = await pdf.getPage(pageNumber);
+    const viewport = page.getViewport({scale: 1});
+    const containerWidth = Math.max(280, Math.min(viewer.clientWidth, window.innerWidth - 64));
+    const scale = containerWidth / viewport.width;
+    const scaledViewport = page.getViewport({scale});
+    viewer.innerHTML = '';
+    const canvas = document.createElement('canvas');
+    canvas.className = 'pdf-page-canvas';
+    canvas.width = Math.floor(scaledViewport.width);
+    canvas.height = Math.floor(scaledViewport.height - 2); // slight reduction to avoid overflow
+    viewer.appendChild(canvas);
+    const context = canvas.getContext('2d');
+    await page.render({canvasContext: context, viewport: scaledViewport}).promise;
+    document.getElementById('pdfPageLabel').textContent = `Page ${pageNumber} of ${pdf.numPages}`;
+  }
+
+  function openModal(c){
+    const modal = document.getElementById('modalContent');
+    const isPdf = !!(c.credentialUrl && c.credentialUrl.match(/\.pdf$/i));
+    const viewerMarkup = isPdf ? `
+      <div class="pdf-viewer">
+        <div id="pdfViewer"></div>
+        
+      </div>
+    ` : '';
+    const viewAction = isPdf ? '' : `<a class="btn btn-primary" href="${c.credentialUrl}" target="_blank" rel="noopener noreferrer">View credential</a>`;
+
+    modal.innerHTML = `
+      <button class="modal-close" id="modalClose">&times;</button>
+      <span class="cat-tag">${c.category}</span>
+      <h2>${c.title}</h2>
+      <p class="issuer">${c.issuer}</p>
+      <p class="modal-desc">${c.description}</p>
+      ${viewerMarkup}
+      <div class="modal-actions">
+        ${viewAction}
+        <button class="btn btn-ghost" id="modalCloseBtn">Close</button>
+      </div>
+    `;
+    document.getElementById('overlay').classList.add('open');
+    document.getElementById('modalClose').addEventListener('click', closeModal);
+    document.getElementById('modalCloseBtn').addEventListener('click', closeModal);
+    if(isPdf && window.pdfjsLib){
+      loadPdfDocument(c.credentialUrl).then(pdf=>{
+        if(!pdf) return;
+        let currentPage = 1;
+        renderPdfPage(pdf, currentPage);
+        document.getElementById('prevPdfPage').addEventListener('click', ()=>{
+          if(currentPage <= 1) return;
+          currentPage -= 1;
+          renderPdfPage(pdf, currentPage);
+        });
+        document.getElementById('nextPdfPage').addEventListener('click', ()=>{
+          if(currentPage >= pdf.numPages) return;
+          currentPage += 1;
+          renderPdfPage(pdf, currentPage);
+        });
+      });
+    }
+  }
+
+  function closeModal(){
+    document.getElementById('overlay').classList.remove('open');
+    const viewer = document.getElementById('pdfViewer');
+    if(viewer) viewer.innerHTML = '';
+  }
+
+  document.getElementById('overlay').addEventListener('click', (e)=>{
+    if(e.target.id === 'overlay') closeModal();
+  });
+  document.addEventListener('keydown', (e)=>{
+    if(e.key === 'Escape') closeModal();
+  });
+
+  document.getElementById('searchInput').addEventListener('input', (e)=>{
+    searchTerm = e.target.value;
+    renderGrid();
+  });
+
+  renderChips();
+  renderGrid();
+
+</script>
+
+<!-- load navbar/footer scripts -->
+
+<div id="footer"></div>
+<script src="script/footer.js"></script>
+<script src="script/animated-background.js"></script>
+</body>
+</html>

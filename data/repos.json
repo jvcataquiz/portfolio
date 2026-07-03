@@ -51,3 +51,4 @@
   {"name": "Weather-app-with-Api", "description": null, "language": "C#", "html_url": "https://github.com/jvcataquiz/Weather-app-with-Api", "pushed_at": "2022-08-28T08:02:53Z"},
   {"name": "Spring Boot JWT Authentication & Authorization (RBAC + Scopes)", "description": "Spring Boot JWT Authentication & Authorization (RBAC + Scopes) is a self-contained demo application that showcases secure user authentication, role-based access control, and fine-grained scope-based authorization using Spring Boot 3, Spring Security 6, and JWTs.", "language": "Java", "html_url": "https://github.com/jvcataquiz/Spring-Boot-JWT-Authentication-and-Authorization-RBAC-Scopes-", "pushed_at": "3026-07-02T02:55:38Z"}
 ]
+

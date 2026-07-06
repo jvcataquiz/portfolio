@@ -885,6 +885,7 @@ body.light-mode .developer-illustration {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 30px;
+    align-items: stretch;
 }
 
 .education-card {
@@ -895,6 +896,9 @@ body.light-mode .developer-illustration {
     border: 2px solid rgba(229, 9, 20, 0.2);
     position: relative;
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
 }
 
 .education-card::before {
@@ -962,6 +966,18 @@ body.light-mode .developer-illustration {
     color: var(--text-tertiary);
     line-height: 1.6;
     font-size: 14px;
+}
+
+/* Fix: push "View Certificate" button to the bottom of each card so they line up */
+.education-card .toggleRead {
+    margin-bottom: 10px;
+    display: inline-block;
+}
+
+.education-card .cta-buttons {
+    margin-top: auto;
+    padding-top: 20px;
+    justify-content: flex-start;
 }
 
 /* Footer */
@@ -1161,20 +1177,4 @@ footer {
 
 .theme-toggle .label {
     display: none;
-}
-
-.education-card {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-}
-
-.education-card .toggleRead {
-    margin-bottom: 10px;
-}
-
-.education-card .cta-buttons {
-    margin-top: auto;
-    padding-top: 20px;
-    justify-content: center;
 }

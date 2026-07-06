@@ -11,6 +11,7 @@ $('#myModal').on('show.bs.modal', function (event) {
     "WEB101" :`<iframe src="https://drive.google.com/file/d/1ZryL3likwCCFelvajcy6uqN0-KR5F3Gl/preview" width="100%" height="600vh" allow="autoplay"></iframe>`
   }
 
+  
   var datavalue = data[recipient]
   // modal.find('.modal-title').text(recipient + ' Certificate' )
   modal.find('.modal-body').html(datavalue)

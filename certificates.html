@@ -9,6 +9,10 @@
 <!-- Use main site theme to align colors -->
 <link rel="stylesheet" href="css/style.css">
 <style>
+  html, body{
+  overflow-x:hidden;
+  max-width:100%;
+}
   /* Map local palette variables to main site variables for consistent look */
   :root{
     --ink: var(--bg-primary);
@@ -243,6 +247,7 @@
 
   /* Modal */
   .overlay{
+
     position:fixed; inset:0;
     background:rgba(15,19,26,0.72);
     backdrop-filter:blur(3px);
@@ -309,11 +314,11 @@
     margin-bottom:22px;
   }
 
-  .pdf-viewer{margin:12px 0; max-height:68vh; overflow:auto; height: 64vh;}
+  .pdf-viewer{margin:12px 0;  overflow:auto;}
   .pdf-viewer iframe,
-  .pdf-viewer object{width:100%; height:100%; border:0; display:block; overflow: hidden;}
+  .pdf-viewer object{width:100%; height:100%; border:0; display:block; }
  .pdf-viewer iframe{
-height: 600px;
+height: 400px;
  /* xr 320px */
 
 }
@@ -321,9 +326,7 @@ height: 600px;
      iframe{height:340vh;}
  .pdf-viewer{height: 20vh;overflow:hidden;}
   }
-@media (min-width: 414px){
-   .pdf-viewer{height: 30vh;overflow:hidden;}
-  }
+
 @media (max-width: 414px){
 
  .pdf-viewer{height: 20vh;overflow:hidden;}
@@ -373,10 +376,50 @@ height: 600px;
     .modal-grid{grid-template-columns:1fr;}
   }
   /* Pagination */
-  .pagination{display:flex;gap:8px;justify-content:center;align-items:center;margin-top:28px;}
-  .pagination button{background:transparent;border:1px solid rgba(176,141,87,0.18);color:var(--muted-light);padding:8px 12px;border-radius:6px;cursor:pointer}
+  .pagination{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+    justify-content:center;
+    align-items:center;
+    margin-top:28px;
+    max-width:100%;
+    padding:0 8px;
+  }
+  .pagination button{
+    background:transparent;
+    border:1px solid rgba(176,141,87,0.18);
+    color:var(--muted-light);
+    padding:8px 12px;
+    border-radius:6px;
+    cursor:pointer;
+    font-family:'JetBrains Mono', monospace;
+    font-size:13px;
+    min-width:36px;
+  }
   .pagination button.active{background:var(--gold);border-color:var(--gold);color:var(--ink);font-weight:600}
   .pagination button:disabled{opacity:0.35;cursor:default}
+  .pagination .ellipsis{
+    border:none;
+    background:none;
+    color:var(--muted-light);
+    padding:8px 4px;
+    cursor:default;
+    min-width:auto;
+  }
+
+  @media (max-width:520px){
+    .pagination{gap:4px;margin-top:20px;}
+    .pagination button{
+      padding:6px 9px;
+      font-size:12px;
+      min-width:30px;
+    }
+    .pagination button#prevPage,
+    .pagination button#nextPage{
+      padding:6px 10px;
+    }
+  }
     .header1{
     display:flex;
     flex-direction:column;
@@ -581,18 +624,60 @@ function renderPagination(totalPages){
   const pager = document.getElementById('pagination');
   if(!pager) return;
   if(totalPages <= 1){ pager.innerHTML = ''; return; }
+
+  const isMobile = window.innerWidth <= 520;
+  const pages = getCompactPageList(currentPage, totalPages, isMobile);
+
   let html = '';
   html += `<button id="prevPage" ${currentPage===0?'disabled':''} aria-label="Previous page">Prev</button>`;
-  for(let i=0;i<totalPages;i++){
-    html += `<button class="${i===currentPage?'active':''}" data-page="${i}">${i+1}</button>`;
-  }
+  pages.forEach(p=>{
+    if(p === '...'){
+      html += `<button class="ellipsis" disabled>&hellip;</button>`;
+    } else {
+      html += `<button class="${p===currentPage?'active':''}" data-page="${p}">${p+1}</button>`;
+    }
+  });
   html += `<button id="nextPage" ${currentPage===totalPages-1?'disabled':''} aria-label="Next page">Next</button>`;
   pager.innerHTML = html;
+
   pager.querySelectorAll('button[data-page]').forEach(b=> b.addEventListener('click', ()=> gotoPage(parseInt(b.dataset.page))));
   const prev = pager.querySelector('#prevPage');
   const next = pager.querySelector('#nextPage');
   prev && prev.addEventListener('click', ()=> gotoPage(Math.max(0, currentPage-1)));
   next && next.addEventListener('click', ()=> gotoPage(Math.min(totalPages-1, currentPage+1)));
+}
+
+// Builds a condensed page list like [0,'...',4,5,6,'...',10]
+// so mobile never has to render every page number.
+function getCompactPageList(current, total, isMobile){
+  const siblingCount = isMobile ? 1 : 2;
+  const totalNumbersShown = siblingCount * 2 + 5; // first, last, current, 2 ellipses buffer
+
+  if(total <= totalNumbersShown){
+    return Array.from({length: total}, (_, i) => i);
+  }
+
+  const leftSibling = Math.max(current - siblingCount, 0);
+  const rightSibling = Math.min(current + siblingCount, total - 1);
+
+  const showLeftEllipsis = leftSibling > 1;
+  const showRightEllipsis = rightSibling < total - 2;
+
+  const pages = [];
+  pages.push(0);
+
+  if(showLeftEllipsis) pages.push('...');
+  else for(let i=1;i<leftSibling;i++) pages.push(i);
+
+  for(let i=leftSibling;i<=rightSibling;i++){
+    if(i !== 0 && i !== total-1) pages.push(i);
+  }
+
+  if(showRightEllipsis) pages.push('...');
+  else for(let i=rightSibling+1;i<total-1;i++) pages.push(i);
+
+  pages.push(total-1);
+  return pages;
 }
 
 function gotoPage(n){ currentPage = n; renderGrid(); window.scrollTo({top: document.getElementById('grid').offsetTop - 80, behavior:'smooth'}); }
@@ -614,6 +699,14 @@ window.addEventListener('resize', ()=>{
       _lastItemsPerPage = newItemsPerPage;
       currentPage = 0;
       renderGrid();
+    } else {
+      // Even if items-per-page didn't change, re-render pagination so the
+      // compact page list (mobile vs desktop sibling count) stays correct
+      // if the viewport crossed 520px without changing itemsPerPage tiering.
+      const list = filtered();
+      const itemsPerPage = getItemsPerPage();
+      const totalPages = Math.max(1, Math.ceil(list.length / itemsPerPage));
+      renderPagination(totalPages);
     }
   }, 200);
 });
@@ -628,7 +721,7 @@ function openModal(c){
   const isEmbeddable = isEmbeddableCredential(c.credentialUrl);
   const viewerMarkup = isEmbeddable ? `
     <div class="pdf-viewer">
-      <iframe src="${c.credentialUrl}" title="${c.title}" width="100%" height="480" allow="autoplay"></iframe>
+      <iframe src="${c.credentialUrl}" title="${c.title}" width="100%" height="480"  style="transform:scale(0.9);" allow="autoplay"></iframe>
     </div>
   ` : '';
   const viewAction = isEmbeddable ? '' : `<a class="btn btn-primary" href="${c.credentialUrl}" target="_blank" rel="noopener noreferrer">View credential</a>`;

@@ -1162,3 +1162,19 @@ footer {
 .theme-toggle .label {
     display: none;
 }
+
+.education-card {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.education-card .toggleRead {
+    margin-bottom: 10px;
+}
+
+.education-card .cta-buttons {
+    margin-top: auto;
+    padding-top: 20px;
+    justify-content: center;
+}

@@ -19,6 +19,7 @@
     <link rel="stylesheet" href="css/modal.css">
     <link rel="stylesheet" href="css/animated-background.css">
     <link rel="stylesheet" href="css/feature-project.css">
+    <link rel="stylesheet" href="css/about-3d.css">
 </head>
 
 <body>
@@ -58,10 +59,12 @@
 
     <!-- About Section -->
     <section class="about-section" id="about">
+        <canvas id="about-3d-bg" aria-hidden="true"></canvas>
         <div class="container">
             <h2 class="section-title">About Me</h2>
             <div class="about-content">
                 <div class="about-image-container">                  
+                    <div class="about-tilt" id="about-tilt">
                     <div class="about-image-wrapper">
                         <img src="image/jerick.jpeg" alt="Developer" class="about-image"
                             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
@@ -74,6 +77,11 @@
                                 <div class="floating-icon">🎨</div>
                             </div>
                         </div>
+                        <div class="about-glare"></div>
+                    </div>
+                    <span class="depth-chip chip-1">Java</span>
+                    <span class="depth-chip chip-2">Spring Boot</span>
+                    <span class="depth-chip chip-3">Microservices</span>
                     </div>
                 </div>
                 <div class="about-text">
@@ -427,6 +435,7 @@
     <script src="script/navbar.js"></script>
     <script src="script/footer.js"></script>
     <script src="script/blocker.js"></script>
+    <script type="module" src="script/about-3d.js"></script>
 </body>
 
 </html>

@@ -1,0 +1,137 @@
+/* ===== About section: 3D upgrade ===== */
+
+.about-section {
+    position: relative;
+}
+
+/* Three.js node-network canvas sits behind the content */
+#about-3d-bg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    pointer-events: none;
+}
+
+.about-section > .container {
+    position: relative;
+    z-index: 1;
+}
+
+/* Perspective lives on the container, preserve-3d on the tilting element */
+.about-image-container {
+    perspective: 1000px;
+}
+
+.about-tilt {
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.25s ease-out;
+    will-change: transform;
+    touch-action: pan-y;
+}
+
+.about-tilt.is-active {
+    transition: transform 0.08s linear;
+}
+
+/* Photo: keep a fixed ratio so there is never an empty band under it */
+.about-image-wrapper {
+    width: 350px;
+    height: auto;
+    aspect-ratio: 7 / 8;
+    border-radius: 18px;
+    transform: translateZ(0);
+    box-shadow:
+        0 30px 80px rgba(229, 9, 20, 0.35),
+        0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+
+/* the old hover scale fights the tilt transform, so disable it */
+.about-image-wrapper:hover {
+    transform: translateZ(0);
+}
+
+.about-image-wrapper::before {
+    border-radius: 18px;
+}
+
+/* moving light reflection */
+.about-glare {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    border-radius: inherit;
+    background: radial-gradient(circle at var(--gx, 50%) var(--gy, 0%),
+            rgba(255, 255, 255, 0.28), transparent 55%);
+    opacity: 0;
+    transition: opacity 0.3s;
+    mix-blend-mode: soft-light;
+}
+
+.about-tilt.is-active .about-glare {
+    opacity: 1;
+}
+
+/* floating chips at different depths */
+.depth-chip {
+    position: absolute;
+    padding: 8px 16px;
+    border-radius: 999px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #fff;
+    background: rgba(229, 9, 20, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    backdrop-filter: blur(6px);
+    box-shadow: 0 10px 30px rgba(229, 9, 20, 0.45);
+    white-space: nowrap;
+    pointer-events: none;
+    animation: chipFloat 4s ease-in-out infinite;
+}
+
+.chip-1 { top: 6%;  left: -14%;  transform: translateZ(90px); }
+.chip-2 { top: 52%; right: -16%; transform: translateZ(130px); animation-delay: -1.3s; }
+.chip-3 { bottom: 4%; left: -8%; transform: translateZ(70px);  animation-delay: -2.6s; }
+
+@keyframes chipFloat {
+    0%, 100% { margin-top: 0; }
+    50%      { margin-top: -12px; }
+}
+
+/* text block gets a soft depth reveal */
+.about-text {
+    transform-origin: left center;
+}
+
+.about-text.depth-reveal {
+    opacity: 0;
+    transform: perspective(1000px) rotateY(8deg) translateX(40px);
+    transition: opacity 0.9s ease, transform 0.9s cubic-bezier(.2, .8, .2, 1);
+}
+
+.about-text.depth-reveal.in-view {
+    opacity: 1;
+    transform: perspective(1000px) rotateY(0) translateX(0);
+}
+
+@media (max-width: 768px) {
+    .about-image-wrapper {
+        width: 280px;
+    }
+
+    .chip-1 { left: -4%; }
+    .chip-2 { right: -4%; }
+    .chip-3 { left: 0; }
+
+    .depth-chip {
+        font-size: 12px;
+        padding: 6px 12px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .depth-chip { animation: none; }
+    .about-text.depth-reveal { opacity: 1; transform: none; transition: none; }
+}

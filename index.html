@@ -59,29 +59,16 @@
 
     <!-- About Section -->
     <section class="about-section" id="about">
-        <canvas id="about-3d-bg" aria-hidden="true"></canvas>
         <div class="container">
             <h2 class="section-title">About Me</h2>
             <div class="about-content">
-                <div class="about-image-container">                  
-                    <div class="about-tilt" id="about-tilt">
-                    <div class="about-image-wrapper">
-                        <img src="image/jerick.jpeg" alt="Developer" class="about-image"
-                            onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                        <div class="developer-illustration" style="display: none;">
-                            👨‍💻
-                            <div class="floating-elements">
-                                <div class="floating-icon">💻</div>
-                                <div class="floating-icon">🚀</div>
-                                <div class="floating-icon">⚡</div>
-                                <div class="floating-icon">🎨</div>
-                            </div>
+                <div class="about-image-container">
+                    <!-- 3D stage: giant name BEHIND the cutout, glowing nodes behind both -->
+                    <div class="about-stage" id="about-stage">
+                        <canvas id="about-3d-bg" aria-hidden="true"></canvas>
+                        <div class="stage-3d" id="stage-3d">
+                            <img src="image/jerick-cutout.png" alt="Jerick Cataquiz" class="stage-person">
                         </div>
-                        <div class="about-glare"></div>
-                    </div>
-                    <span class="depth-chip chip-1">Java</span>
-                    <span class="depth-chip chip-2">Spring Boot</span>
-                    <span class="depth-chip chip-3">Microservices</span>
                     </div>
                 </div>
                 <div class="about-text">
